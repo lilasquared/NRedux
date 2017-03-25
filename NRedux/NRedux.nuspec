@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>NRedux</id>
+    <version>0.1</version>
+    <title>NRedux</title>
+    <authors>Aaron Roberts</authors>
+    <owners>Aaron Roberts</owners>
+    <licenseUrl>https://github.com/lilasquared/NRedux/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/lilasquared/NRedux</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>NRedux is a predictable state container for .NET apps.  Inspired by https://github.com/reactjs/redux. </description>
+    <releaseNotes></releaseNotes>
+    <copyright></copyright>
+    <tags>Redux NRedux State Container</tags>
+  </metadata>
+</package>

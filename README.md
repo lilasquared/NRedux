@@ -81,3 +81,29 @@ namespace NRedux.CounterApp.Tests {
 }
 ```
 
+### Store
+
+The Store is the class that brings *actions* and *reducers* together, along with third party *middleware*.  The store has the following responsibilities.
+
+* Holds the application state of type TState
+* Allows state to be updated via Dispatch(Object action)
+* Registers listeners via Subscribe(Action listener)
+
+The store can be enhanced by third party middleware that doesn't ship with NRedux, like logging, async tasks, or undo.
+
+It is important to not that you should only ever have a single store in an NRedux application.  Since the store implements IStore<TState> it would be beneficial to implement some kind of dependency injection for your app.  In the examples it is just defined as a static property of the application class.
+
+The store is created using a static factory method `Redux.CreateStore` (will change to NRedux.CreateStore for v1.0)
+
+```csharp
+namespace NRedux.TodoApp {
+    class App {
+        private static IStore<AppState> _store;
+        static void Main(string[] args) {
+            var rootReducer = Redux.CombineReducers<AppState, Reducer>();
+            _store = Redux.CreateStore(rootReducer, new AppState());
+            // other logic
+        }
+    }
+}
+```

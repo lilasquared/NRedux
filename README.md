@@ -38,11 +38,12 @@ If there is no action to perform for a particular reducer, you should return the
 
 The shape of the state is up to you.  It can be primitive, and array, or an object.
 The only important part is that you should not mutate the state object, but return a new object if the state changes.
+
 ```csharp
 namespace NRedux.CounterApp {
     public partial class Reducer {
         public static Int32 Count(Int32 previousState, Object action) {
-            if (action as IncrementAction incrementAction) {
+            if (action is IncrementAction incrementAction) {
                 return previousState + 1;
             }
             
@@ -55,3 +56,28 @@ namespace NRedux.CounterApp {
     }
 }
 ```
+
+There are a few things of note for reducers which will be touched upon later.  The reducer above is a public static method.  Since reducers are pure functions - they should not rely on *anything* that is not directly passed into the function.  Because of this it is safe to make them static and they are super easy to test.
+
+```csharp
+using Xunit;
+
+namespace NRedux.CounterApp.Tests {
+    public class ReducerTests {
+        [Fact]
+        public void Increments_State_When_Action_Is_IncrementAction() {
+            var newState = Reducer.Count(0, new IncrementAction());
+
+            Assert.Equal(1, newState);
+        }
+
+        [Fact]
+        public void Decrements_State_When_Action_Is_DecrementAction() {
+            var newState = Reducer.Count(0, new DecrementAction());
+
+            Assert.Equal(-1, newState);
+        }
+    }
+}
+```
+

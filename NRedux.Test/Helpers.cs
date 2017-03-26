@@ -12,14 +12,14 @@ namespace NRedux.Test {
                 Message = message;
             }
         }
-        public static Func<Func<Object, Object>, Func<Todo[]>, Task<Object>> AddTodoAsync(String message) {
+        public static Func<Dispatcher, Func<Todo[]>, Task<Object>> AddTodoAsync(String message) {
             return (dispatch, getState) => {
                 return Task.Run(() => {
                     return dispatch(new AddTodoAction(message));
                 });
             };
         }
-        public static Func<Func<Object, Object>, Func<Todo[]>, Object> AddTodoIfEmpty(String message) {
+        public static Func<Dispatcher, Func<Todo[]>, Object> AddTodoIfEmpty(String message) {
             return (dispatch, getState) => {
                 if (getState().Length == 0) {
                     return dispatch(new AddTodoAction(message));
@@ -132,13 +132,12 @@ namespace NRedux.Test {
             return state;
         };
 
-        public static Func<Func<Object, Object>, Func<Object, Object>> Thunk<TState>(IStoreBase<TState> store) {
-            return next => action => {
-                if (action is Func<Func<Object, Object>, Func<TState>, Object> castAction) {
-                    return castAction(store.Dispatch, store.GetState);
-                }
-                return next(action);
-            };
-        }
+        public static Middleware<Todo[]> Thunk = store => next => action => {
+            if (action is Func<Dispatcher, Func<Todo[]>, Object>) {
+                var castAction = action as Func<Dispatcher, Func<Todo[]>, Object>;
+                return castAction(store.Dispatch, store.GetState);
+            }
+            return next(action);
+        };
     }
 }

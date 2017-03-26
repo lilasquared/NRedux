@@ -2,8 +2,6 @@
 using System.Linq;
 
 namespace NRedux {
-    public delegate CreateStoreDelegate<TState> EnhancerDelegate<TState>(CreateStoreDelegate<TState> createStore);
-    public delegate Func<Func<Object, Object>, Func<Object, Object>> Middleware<TState>(IStoreBase<TState> store);
     public static partial class Redux<TState> {
         public static EnhancerDelegate<TState> ApplyMiddleware(params Middleware<TState>[] middlewares) {
             return createStore => (reducer, preLoadedState, enhancer) => {
@@ -12,7 +10,7 @@ namespace NRedux {
 
                 var middlewareApi = new MiddlewareApi {
                     GetState = store.GetState,
-                    Dispatch = (action) => dispatch(action)
+                    Dispatch = action => dispatch(action)
                 };
 
                 var chain = middlewares.Select(middleware => middleware(middlewareApi)).ToArray();
@@ -24,10 +22,10 @@ namespace NRedux {
 
         internal class MiddlewareApi : IStoreBase<TState> {
             public Func<TState> GetState { get; internal set; }
-            public Func<Object, Object> Dispatch { get; internal set; }
+            public Dispatcher Dispatch { get; internal set; }
         }
 
-        internal static Func<Func<Object, Object>, Func<Object, Object>> Compose(params Func<Func<Object, Object>, Func<Object, Object>>[] funcs) {
+        internal static Func<Dispatcher, Dispatcher> Compose(params Func<Dispatcher, Dispatcher>[] funcs) {
             if (funcs.Length == 0) {
                 return arg => arg;
             }

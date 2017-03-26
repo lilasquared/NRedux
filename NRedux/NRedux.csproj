@@ -45,6 +45,7 @@
     <Compile Include="ArrayExtensions.cs" />
     <Compile Include="CombineReducers.cs" />
     <Compile Include="CreateStore.cs" />
+    <Compile Include="Delegates.cs" />
     <Compile Include="Exceptions\PropertyMismatchException.cs" />
     <Compile Include="Exceptions\PropertyTypeMismatchException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

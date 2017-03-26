@@ -3,7 +3,7 @@
 namespace NRedux {
     public interface IStoreBase<TState> {
         Func<TState> GetState { get; }
-        Func<Object, Object> Dispatch { get; }
+        Dispatcher Dispatch { get; }
     }
 
     public interface IStore<TState> : IStoreBase<TState> {
@@ -12,7 +12,7 @@ namespace NRedux {
     }
 
     public class Store<TState> : IStore<TState> {
-        public Store(Func<Object, Object> dispatch, Func<Action, Action> subscribe, Func<TState> getState, Action<Reducer<TState>> replaceReducer) {
+        public Store(Dispatcher dispatch, Func<Action, Action> subscribe, Func<TState> getState, Action<Reducer<TState>> replaceReducer) {
             GetState = getState;
             Subscribe = subscribe;
             Dispatch = dispatch;
@@ -20,7 +20,7 @@ namespace NRedux {
         }
         public Func<TState> GetState { get; }
         public Func<Action, Action> Subscribe { get; }
-        public Func<Object, Object> Dispatch { get; }
+        public Dispatcher Dispatch { get; }
         public Action<Reducer<TState>> ReplaceReducer { get; }
     }
 }

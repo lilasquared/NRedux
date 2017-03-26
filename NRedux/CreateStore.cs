@@ -49,7 +49,7 @@ namespace NRedux {
                 return unsubscribe;
             };
 
-            Func<Object, Object> dispatch = action => {
+            Dispatcher dispatch = action => {
                 if (Util.IsPrimitiveOrNull(action)) {
                     throw new Exception("Actions must be objects. Use custom middleware for async actions");
                 }

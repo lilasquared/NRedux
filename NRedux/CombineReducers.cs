@@ -29,8 +29,10 @@ namespace NRedux {
             }
 
             var reducerReturnTypes = reducerMethods
+                .OrderBy(methodInfo => methodInfo.Name)
                 .ToDictionary(methodInfo => methodInfo.Name, methodInfo => methodInfo.ReturnType);
             var statePropertyTypes = stateProperties
+                .OrderBy(propertyInfo => propertyInfo.Name)
                 .ToDictionary(propertyInfo => propertyInfo.Name, propertyInfo => propertyInfo.PropertyType);
             
             if (!reducerReturnTypes.Values.ToArray().ArrayEquals(statePropertyTypes.Values.ToArray())) {

@@ -1,10 +1,13 @@
 ﻿using System;
 
 namespace NRedux {
-    public interface IStore<TState> {
+    public interface IStoreBase<TState> {
         Func<TState> GetState { get; }
-        Func<Action, Action> Subscribe { get; }
         Func<Object, Object> Dispatch { get; }
+    }
+
+    public interface IStore<TState> : IStoreBase<TState> {
+        Func<Action, Action> Subscribe { get; }
         Action<Reducer<TState>> ReplaceReducer { get; }
     }
 

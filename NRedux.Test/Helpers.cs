@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace NRedux.Test {
     internal class Helpers {
@@ -10,6 +11,21 @@ namespace NRedux.Test {
             public AddTodoAction(String message) {
                 Message = message;
             }
+        }
+        public static Func<Func<Object, Object>, Func<Todo[]>, Task<Object>> AddTodoAsync(String message) {
+            return (dispatch, getState) => {
+                return Task.Run(() => {
+                    return dispatch(new AddTodoAction(message));
+                });
+            };
+        }
+        public static Func<Func<Object, Object>, Func<Todo[]>, Object> AddTodoIfEmpty(String message) {
+            return (dispatch, getState) => {
+                if (getState().Length == 0) {
+                    return dispatch(new AddTodoAction(message));
+                }
+                return null;
+            };
         }
 
         public class UnknownAction { }
@@ -115,5 +131,14 @@ namespace NRedux.Test {
             }
             return state;
         };
+
+        public static Func<Func<Object, Object>, Func<Object, Object>> Thunk<TState>(IStoreBase<TState> store) {
+            return next => action => {
+                if (action is Func<Func<Object, Object>, Func<TState>, Object> castAction) {
+                    return castAction(store.Dispatch, store.GetState);
+                }
+                return next(action);
+            };
+        }
     }
 }

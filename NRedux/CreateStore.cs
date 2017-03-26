@@ -4,10 +4,13 @@ using System.Linq;
 namespace NRedux {
     internal class InitAction { }
 
-    public delegate Store<TState> CreateStoreDelegate<TState>(Reducer<TState> reducer, TState preLoadedState);
+    public delegate Store<TState> CreateStoreDelegate<TState>(Reducer<TState> reducer, TState preLoadedState, EnhancerDelegate<TState> applyMiddleware = null);
 
-    public static partial class Redux {
-        public static Store<TState> CreateStore<TState>(Reducer<TState> reducer, TState preLoadedState) {
+    public static partial class Redux<TState> {
+        public static CreateStoreDelegate<TState> CreateStore = (reducer, preLoadedState, enhancer) => {
+            if (enhancer != null) {
+                return enhancer(CreateStore)(reducer, preLoadedState);
+            }
             var currentReducer = reducer;
             var currentState = preLoadedState;
             var currentListeners = new Action[0];
@@ -19,8 +22,6 @@ namespace NRedux {
                     nextListeners = currentListeners.ToList();
                 }
             };
-
-            Func<Reducer<TState>, TState, Store<TState>> createStore = CreateStore;
 
             Func<TState> getState = () => currentState;
 
@@ -81,6 +82,6 @@ namespace NRedux {
             dispatch(new InitAction());
 
             return new Store<TState>(dispatch, subscribe, getState, replaceReducer);
-        }
+        };
     }
 }

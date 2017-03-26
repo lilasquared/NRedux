@@ -4,29 +4,37 @@ using System.Reflection;
 using NRedux.Exceptions;
 
 namespace NRedux {
-    public delegate TState Reducer<TState>(TState state, Object action);
     public static partial class Redux {
-        public static Reducer<TState> CombineReducers<TState, TReducers>() where TState : new() {
+        /// <summary>
+        /// Turns all public static reducer functions from TReducers into a single reducer function.  
+        /// It will call every reducer and gather their results into a single object whose 
+        /// keys correspond to the keys of the reducer functions.
+        /// </summary>
+        /// <typeparam name="TState">The type of the state tree.</typeparam>
+        /// <typeparam name="TReducers">The type of the reducer class.</typeparam>
+        /// <returns>
+        ///     A reducer function that invokes every public static reducer method defined on
+        ///     TReducers and maps the results to the corresponding Properties of TState
+        /// </returns>
+        public static Reducer<TState> CombineReducers<TState, TReducers>() {
             var stateType = typeof(TState);
             var reducerMethods = typeof(TReducers).GetMethods(BindingFlags.Public | BindingFlags.Static);
-            var properties = stateType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+            var stateProperties = stateType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
             var reducerKeys = reducerMethods.Select(methodInfo => methodInfo.Name).OrderBy(x => x).ToArray();
-            var propertyKeys = properties.Select(propertyInfo => propertyInfo.Name).OrderBy(x => x).ToArray();
+            var stateKeys = stateProperties.Select(propertyInfo => propertyInfo.Name).OrderBy(x => x).ToArray();
 
-            if (!reducerKeys.ArrayEquals(propertyKeys)) {
-                throw new PropertyMismatchException();
+            if (!reducerKeys.ArrayEquals(stateKeys)) {
+                throw new KeyMismatchException(stateKeys, reducerKeys);
             }
 
             var reducerReturnTypes = reducerMethods
                 .ToDictionary(methodInfo => methodInfo.Name, methodInfo => methodInfo.ReturnType);
-            var propertyTypes = properties
+            var statePropertyTypes = stateProperties
                 .ToDictionary(propertyInfo => propertyInfo.Name, propertyInfo => propertyInfo.PropertyType);
-
-            foreach (var item in reducerReturnTypes) {
-                if (!reducerReturnTypes[item.Key].Equals(propertyTypes[item.Key])) {
-                    throw new PropertyTypeMismatchException();
-                }
+            
+            if (!reducerReturnTypes.Values.ToArray().ArrayEquals(statePropertyTypes.Values.ToArray())) {
+                throw new KeyTypeMismatchException(statePropertyTypes, reducerReturnTypes);
             }
 
             return (state, action) => {

@@ -48,7 +48,7 @@ namespace NRedux.Test {
         }
 
         [Fact]
-        public void ReturnsACompositeReducerThatMapsTheStateKeysToGivenReducers() {
+        public void Returns_A_Composite_Reducer_That_Maps_The_State_Keys_To_Given_Reducers() {
             var reducer = Redux.CombineReducers<State, Reducer>();
 
             var state1 = reducer(new State(), new IncrementAction());
@@ -60,13 +60,13 @@ namespace NRedux.Test {
         }
 
         [Fact]
-        public void ThrowsErrorIfPublicStatePropertiesDoNotPatchPublicStaticReducerMethods() {
-            Assert.Throws<PropertyMismatchException>(() => Redux.CombineReducers<NonMatchingStateProperties, Reducer>());
+        public void Throws_An_Error_If_Public_State_Properties_Do_Not_Match_Public_Static_Reducer_Methods() {
+            Assert.Throws<KeyMismatchException>(() => Redux.CombineReducers<NonMatchingStateProperties, Reducer>());
         }
 
         [Fact]
         public void ThrowsErrorIfPublicStatePropertyTypesDoNotPatchPublicStaticReducerMethodReturnTypes() {
-            Assert.Throws<PropertyTypeMismatchException>(() => Redux.CombineReducers<NonMatchingStatePropertyTypes, Reducer>());
+            Assert.Throws<KeyTypeMismatchException>(() => Redux.CombineReducers<NonMatchingStatePropertyTypes, Reducer>());
         }
     }
 }

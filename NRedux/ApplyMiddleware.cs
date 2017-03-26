@@ -1,40 +1,37 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 
 namespace NRedux {
-    public static partial class Redux<TState> {
-        public static EnhancerDelegate<TState> ApplyMiddleware(params Middleware<TState>[] middlewares) {
+    public static partial class Redux {
+        /// <summary>
+        /// Creates a store enhancer that applies middleware to the dispatch method
+        /// of the NRedux store.  This is handy for a variety of tasks, such as expressing
+        /// asynchronous actions in a concise manner, or logging every action payload.
+        /// 
+        /// See `NRedux.Thunk` package as an example of the NRedux middleware
+        /// 
+        /// Because middleware is potentially asynchronous, this should be the first 
+        /// store enhancer in the composition chain.
+        /// 
+        /// Note that each middleware will be given an <see cref="IStoreBase{TState}" /> parameter.
+        /// 
+        /// </summary>
+        /// <param name="middlewares">The middleware chain to be applied</param>
+        /// <returns>A store enhancer applying the middleware</returns>
+        public static StoreEnhancer<TState> ApplyMiddleware<TState>(params Middleware<TState>[] middlewares) {
             return createStore => (reducer, preLoadedState, enhancer) => {
                 var store = createStore(reducer, preLoadedState, enhancer);
                 var dispatch = store.Dispatch;
 
-                var middlewareApi = new MiddlewareApi {
+                var middlewareApi = new MiddlewareApi<TState> {
                     GetState = store.GetState,
                     Dispatch = action => dispatch(action)
                 };
 
                 var chain = middlewares.Select(middleware => middleware(middlewareApi)).ToArray();
-                dispatch = Compose(chain)(store.Dispatch);
+                dispatch = Util.Compose(chain)(store.Dispatch);
 
                 return new Store<TState>(dispatch, store.Subscribe, store.GetState, store.ReplaceReducer);
             };
-        }
-
-        internal class MiddlewareApi : IStoreBase<TState> {
-            public Func<TState> GetState { get; internal set; }
-            public Dispatcher Dispatch { get; internal set; }
-        }
-
-        internal static Func<Dispatcher, Dispatcher> Compose(params Func<Dispatcher, Dispatcher>[] funcs) {
-            if (funcs.Length == 0) {
-                return arg => arg;
-            }
-
-            if (funcs.Length == 1) {
-                return funcs[0];
-            }
-
-            return funcs.Aggregate((a, b) => arg =>  a(b(arg)));
         }
     }
 }

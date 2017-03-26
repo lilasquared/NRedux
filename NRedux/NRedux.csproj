@@ -42,12 +42,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplyMiddleware.cs" />
-    <Compile Include="ArrayExtensions.cs" />
     <Compile Include="CombineReducers.cs" />
     <Compile Include="CreateStore.cs" />
     <Compile Include="Delegates.cs" />
-    <Compile Include="Exceptions\PropertyMismatchException.cs" />
-    <Compile Include="Exceptions\PropertyTypeMismatchException.cs" />
+    <Compile Include="Exceptions\KeyMismatchException.cs" />
+    <Compile Include="Exceptions\KeyTypeMismatchException.cs" />
+    <Compile Include="MiddlewareApi.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Store.cs" />
     <Compile Include="Util.cs" />

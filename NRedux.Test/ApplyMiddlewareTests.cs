@@ -10,7 +10,7 @@ namespace NRedux.Test {
             var timesCalled = 0;
             Action stub = () => timesCalled++;
 
-            var store = Redux<Helpers.Todo[]>.ApplyMiddleware(TestSpy<Helpers.Todo[]>(stub), Helpers.Thunk)(Redux<Helpers.Todo[]>.CreateStore)(Helpers.TodosReducer, null);
+            var store = Redux.ApplyMiddleware(TestSpy<Helpers.Todo[]>(stub), Helpers.Thunk)(Redux.CreateStore)(Helpers.TodosReducer, null);
 
             store.Dispatch(new Helpers.AddTodoAction("Use Redux"));
             store.Dispatch(new Helpers.AddTodoAction("Flux FTW!"));
@@ -30,14 +30,14 @@ namespace NRedux.Test {
             var timesCalled = 0;
             Action stub = () => timesCalled++;
 
-            var store = Redux<Helpers.Todo[]>.ApplyMiddleware(TestRecursive<Helpers.Todo[]>(stub), Helpers.Thunk)(Redux<Helpers.Todo[]>.CreateStore)(Helpers.TodosReducer, null);
+            var store = Redux.ApplyMiddleware(TestRecursive<Helpers.Todo[]>(stub), Helpers.Thunk)(Redux.CreateStore)(Helpers.TodosReducer, null);
             var promise = store.Dispatch(Helpers.AddTodoAsync("Use Redux")) as Task;
             await promise.ContinueWith(task => Assert.Equal(2, timesCalled));
         }
 
         [Fact]
         public async void Works_With_Thunk_Middleware() {
-            var store = Redux<Helpers.Todo[]>.ApplyMiddleware(Helpers.Thunk)(Redux<Helpers.Todo[]>.CreateStore)(Helpers.TodosReducer, null);
+            var store = Redux.ApplyMiddleware(Helpers.Thunk)(Redux.CreateStore)(Helpers.TodosReducer, null);
 
             var expectedState = new[] {
                 new Helpers.Todo {

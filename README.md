@@ -1,6 +1,6 @@
 # NRedux
 
-NRedux is a predictable state container for .NET apps.  Inspired by https://github.com/reactjs/redux.
+NRedux is a predictable state container for .NET apps.  Inspired by https://github.com/reactjs/redux. and https://github.com/GuillaumeSalles/redux.NET.  It is a port of the public javascript api that feels javascripty.  See Redux.NET for a more dot-net like approach.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/04vk5lxghc02dcxn?svg=true)](https://ci.appveyor.com/project/lilasquared/nredux)
 [![NuGet version](https://badge.fury.io/nu/NRedux.svg)](https://badge.fury.io/nu/NRedux)

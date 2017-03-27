@@ -47,11 +47,29 @@ namespace NRedux {
                     nextListeners = currentListeners.ToList();
                 }
             };
-            Func<TState> getState = () => currentState;
+            Func<TState> getState = () => {
+                if (isDispatching) {
+                    throw new Exception(
+                        "You  may not call store.GetState() while the reducer is executing. " +
+                        "The reducer has already received the state as an argument. " +
+                        "Pass it down from the top reducer instead of reading it from the store. "
+                    );
+                }
+                return currentState;
+            };
 
             Subscriber subscribe = listener => {
                 if (listener == null) {
                     throw new Exception("Expected listener to not be null");
+                }
+
+                if (isDispatching) {
+                    throw new Exception(
+                        "You  may not call store.Subscribe() while the reducer is executing. " +
+                        "If you would like to be notified after the store has been update, subscribe from a " +
+                        "component and invoke store.GetState() in the callback to access the latest state. " +
+                        "See http://redux.js.org/docs/api/Store.html#subscribe for more details."
+                    );
                 }
 
                 var isSubscribed = true;
@@ -62,6 +80,13 @@ namespace NRedux {
                 Action unsubscribe = () => {
                     if (!isSubscribed) {
                         return;
+                    }
+
+                    if (isDispatching) {
+                        throw new Exception(
+                            "You  may not call unsubscribe from a store listener while the reducer is executing. " +
+                            "See http://redux.js.org/docs/api/Store.html#subscribe for more details."
+                        );
                     }
 
                     isSubscribed = false;

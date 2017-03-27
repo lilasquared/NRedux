@@ -378,12 +378,44 @@ namespace NRedux.Test {
 
         [Fact]
         public void Does_Not_Allow_Dispatch_From_Within_Reducer() {
-            var store = Redux.CreateStore(Helpers.DispatchInMiddleReducer, 0);
+            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
 
             Assert.Throws<Exception>(() => {
                 store.Dispatch(new ActionWithBoundFn(() => {
                     store.Dispatch(new UnknownAction());
                 }));
+            });
+        }
+
+        [Fact]
+        public void Does_Not_Allow_GetState_From_Within_Reducer() {
+            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+
+            Assert.Throws<Exception>(() => {
+                store.Dispatch(new ActionWithBoundFn(() => {
+                    store.GetState();
+                }));
+            });
+        }
+
+        [Fact]
+        public void Does_Not_Allow_Subscribe_From_Within_Reducer() {
+            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+
+            Assert.Throws<Exception>(() => {
+                store.Dispatch(new ActionWithBoundFn(() => {
+                    store.Subscribe(() => { });
+                }));
+            });
+        }
+
+        [Fact]
+        public void Does_Not_Allow_Unsubscribe_From_Within_Reducer() {
+            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+            var unsubscribe = store.Subscribe(() => { });
+
+            Assert.Throws<Exception>(() => {
+                store.Dispatch(new ActionWithBoundFn(unsubscribe));
             });
         }
 

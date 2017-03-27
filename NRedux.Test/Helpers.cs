@@ -100,7 +100,7 @@ namespace NRedux.Test {
             return currentState;
         };
 
-        public static Reducer<Int32> DispatchInMiddleReducer = (state, action) => {
+        public static Reducer<Int32> BoundActionInMiddleReducer = (state, action) => {
             if (action is ActionWithBoundFn) {
                 var castAction = (ActionWithBoundFn)action;
                 castAction.BoundAction();

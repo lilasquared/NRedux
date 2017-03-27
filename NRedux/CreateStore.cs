@@ -40,6 +40,7 @@ namespace NRedux {
             var currentListeners = new Action[0];
             var nextListeners = currentListeners.ToList();
             var isDispatching = false;
+            var syncroot = new Object();
 
             Action ensureCanMutateNextListeners = () => {
                 if (nextListeners.Equals(currentListeners)) {
@@ -77,16 +78,18 @@ namespace NRedux {
                     throw new Exception("Actions must be objects. Use custom middleware for async actions");
                 }
 
-                if (isDispatching) {
-                    throw new Exception("Reducers may not dispatch actions");
-                }
+                lock (syncroot) {
+                    if (isDispatching) {
+                        throw new Exception("Reducers may not dispatch actions");
+                    }
 
-                try {
-                    isDispatching = true;
-                    currentState = currentReducer(currentState, action);
-                }
-                finally {
-                    isDispatching = false;
+                    try {
+                        isDispatching = true;
+                        currentState = currentReducer(currentState, action);
+                    }
+                    finally {
+                        isDispatching = false;
+                    }
                 }
 
                 var listeners = currentListeners = nextListeners.ToArray();

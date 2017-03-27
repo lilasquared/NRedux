@@ -52,7 +52,7 @@ namespace NRedux {
             }
             return true;
         }
-        public static void ForEach<T>(this IEnumerable<T> array, Action<T> action) {
+        internal static void ForEach<T>(this IEnumerable<T> array, Action<T> action) {
             foreach (var item in array) {
                 action(item);
             }

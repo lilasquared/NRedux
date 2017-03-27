@@ -16,6 +16,7 @@ namespace NRedux {
         ///     A reducer function that invokes every public static reducer method defined on
         ///     TReducers and maps the results to the corresponding Properties of TState
         /// </returns>
+        [Obsolete("While cool that this works, this functionality is not needed. See <TODO> for examples on creating complex reducers.  Do not use this")]
         public static Reducer<TState> CombineReducers<TState, TReducers>() {
             var stateType = typeof(TState);
             var reducerMethods = typeof(TReducers).GetMethods(BindingFlags.Public | BindingFlags.Static);
@@ -44,7 +45,7 @@ namespace NRedux {
                 var nextState = Activator.CreateInstance(stateType);
                 foreach (var reducer in reducerMethods) {
                     var previousStateForReducer = stateType.GetProperty(reducer.Name).GetValue(state);
-                    var nextStateForReducer = reducer.Invoke(null, new Object[] { previousStateForReducer, action });
+                    var nextStateForReducer = reducer.Invoke(null, new [] { previousStateForReducer, action });
                     stateType.GetProperty(reducer.Name).SetValue(nextState, nextStateForReducer);
                     hasChanged = hasChanged || !nextStateForReducer.Equals(previousStateForReducer);
                 }

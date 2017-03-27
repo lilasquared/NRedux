@@ -154,7 +154,7 @@ namespace NRedux.Test {
                 }
             }, store.GetState());
 
-            store.Dispatch(new Helpers.AddTodoAction("Surely"));
+            store.Dispatch(new AddTodoAction("Surely"));
             Assert.Equal(new[] {
                 new Todo {
                     Id = 3,

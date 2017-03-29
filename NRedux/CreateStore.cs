@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace NRedux {
+﻿namespace NRedux {
     internal class InitAction { }
     public static partial class Redux {
         /// <summary>
@@ -31,108 +28,11 @@ namespace NRedux {
         ///     A NRedux store that lets you read teh state, dispatch actions and subscrive
         ///     to changes
         /// </returns>
-        public static IStore<TState> CreateStore<TState>(Reducer<TState> reducer, TState preLoadedState, StoreEnhancer<TState> enhancer = null) {
+        public static IStore<TState> CreateStore<TState>(Reducer<TState> reducer, TState preLoadedState = default(TState), StoreEnhancer<TState> enhancer = null) {
             if (enhancer != null) {
                 return enhancer(CreateStore)(reducer, preLoadedState);
             }
-            var currentReducer = reducer;
-            var currentState = preLoadedState;
-            var currentListeners = new Action[0];
-            var nextListeners = currentListeners.ToList();
-            var isDispatching = false;
-            var syncroot = new Object();
-
-            Action ensureCanMutateNextListeners = () => {
-                if (nextListeners.Equals(currentListeners)) {
-                    nextListeners = currentListeners.ToList();
-                }
-            };
-            Func<TState> getState = () => {
-                if (isDispatching) {
-                    throw new Exception(
-                        "You  may not call store.GetState() while the reducer is executing. " +
-                        "The reducer has already received the state as an argument. " +
-                        "Pass it down from the top reducer instead of reading it from the store. "
-                    );
-                }
-                return currentState;
-            };
-
-            Subscriber subscribe = listener => {
-                if (listener == null) {
-                    throw new Exception("Expected listener to not be null");
-                }
-
-                if (isDispatching) {
-                    throw new Exception(
-                        "You  may not call store.Subscribe() while the reducer is executing. " +
-                        "If you would like to be notified after the store has been update, subscribe from a " +
-                        "component and invoke store.GetState() in the callback to access the latest state. " +
-                        "See http://redux.js.org/docs/api/Store.html#subscribe for more details."
-                    );
-                }
-
-                var isSubscribed = true;
-
-                ensureCanMutateNextListeners();
-                nextListeners.Add(listener);
-
-                Action unsubscribe = () => {
-                    if (!isSubscribed) {
-                        return;
-                    }
-
-                    if (isDispatching) {
-                        throw new Exception(
-                            "You  may not call unsubscribe from a store listener while the reducer is executing. " +
-                            "See http://redux.js.org/docs/api/Store.html#subscribe for more details."
-                        );
-                    }
-
-                    isSubscribed = false;
-
-                    ensureCanMutateNextListeners();
-                    nextListeners.Remove(listener);
-                };
-
-                return unsubscribe;
-            };
-
-            Dispatcher dispatch = action => {
-                if (Util.IsPrimitiveOrNull(action)) {
-                    throw new Exception("Actions must be objects. Use custom middleware for async actions");
-                }
-
-                lock (syncroot) {
-                    if (isDispatching) {
-                        throw new Exception("Reducers may not dispatch actions");
-                    }
-
-                    try {
-                        isDispatching = true;
-                        currentState = currentReducer(currentState, action);
-                    }
-                    finally {
-                        isDispatching = false;
-                    }
-                }
-
-                var listeners = currentListeners = nextListeners.ToArray();
-                foreach (var listener in listeners) {
-                    listener();
-                }
-
-                return action;
-            };
-
-            Action<Reducer<TState>> replaceReducer = nextReducer => {
-                currentReducer = nextReducer;
-                dispatch(new InitAction());
-            };
-
-            dispatch(new InitAction());
-
-            return new Store<TState>(dispatch, subscribe, getState, replaceReducer);
+            return new Store<TState>(reducer, preLoadedState);
         }
     }
 }

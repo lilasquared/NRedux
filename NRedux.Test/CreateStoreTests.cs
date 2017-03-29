@@ -1,5 +1,4 @@
-﻿using Moq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,25 +16,25 @@ namespace NRedux.Test {
                 }
             });
 
-            Assert.Equal(1, store.GetState().Length);
-            Assert.Equal(1, store.GetState().First().Id);
-            Assert.Equal("Hello", store.GetState().First().Message);
+            Assert.Equal(1, store.State.Length);
+            Assert.Equal(1, store.State.First().Id);
+            Assert.Equal("Hello", store.State.First().Message);
         }
 
         [Fact]
         public void Dispatches_Once_On_Store_Creation() {
             var store = Redux.CreateStore((state, action) => state + 1, 0);
 
-            Assert.Equal(1, store.GetState());
+            Assert.Equal(1, store.State);
         }
 
         [Fact]
         public void Applies_The_Reducer_To_Previous_State() {
-            var store = Redux.CreateStore(TodosReducer, null);
-            Assert.Equal(new Todo[] { }, store.GetState());
+            var store = Redux.CreateStore(TodosReducer);
+            Assert.Equal(new Todo[] { }, store.State);
 
             store.Dispatch(new UnknownAction());
-            Assert.Equal(new Todo[] { }, store.GetState());
+            Assert.Equal(new Todo[] { }, store.State);
 
             store.Dispatch(new AddTodoAction("Hello"));
             Assert.Equal(new[] {
@@ -43,7 +42,7 @@ namespace NRedux.Test {
                     Id = 1,
                     Message = "Hello"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.Dispatch(new AddTodoAction("World"));
             Assert.Equal(new[] {
@@ -55,7 +54,7 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
         }
 
         [Fact]
@@ -71,7 +70,7 @@ namespace NRedux.Test {
                     Id = 1,
                     Message = "Hello"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.Dispatch(new UnknownAction());
             Assert.Equal(new[] {
@@ -79,7 +78,7 @@ namespace NRedux.Test {
                     Id = 1,
                     Message = "Hello"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.Dispatch(new AddTodoAction("World"));
             Assert.Equal(new[] {
@@ -91,12 +90,12 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
         }
 
         [Fact]
         public void Preservers_The_State_When_Replacing_A_Reducer() {
-            var store = Redux.CreateStore(TodosReducer, null);
+            var store = Redux.CreateStore(TodosReducer);
             store.Dispatch(new AddTodoAction("Hello"));
             store.Dispatch(new AddTodoAction("World"));
             Assert.Equal(new[] {
@@ -108,7 +107,7 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.ReplaceReducer(TodosReducerReverse);
             Assert.Equal(new[] {
@@ -120,7 +119,7 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.Dispatch(new AddTodoAction("Perhaps"));
             Assert.Equal(new[] {
@@ -136,7 +135,7 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.ReplaceReducer(TodosReducer);
             Assert.Equal(new[] {
@@ -152,7 +151,7 @@ namespace NRedux.Test {
                     Id = 2,
                     Message = "World"
                 }
-            }, store.GetState());
+            }, store.State);
 
             store.Dispatch(new AddTodoAction("Surely"));
             Assert.Equal(new[] {
@@ -172,186 +171,207 @@ namespace NRedux.Test {
                     Id = 4,
                     Message = "Surely"
                 }
-            }, store.GetState());
+            }, store.State);
         }
 
         [Fact]
         public void Supports_Multiple_Subscriptions() {
-            var store = Redux.CreateStore(TodosReducer, null);
+            var store = Redux.CreateStore(TodosReducer);
 
-            var listenerA = new Mock<Action>();
-            var listenerB = new Mock<Action>();
+            var timesListenerACalled = 0;
+            var timesListenerBCalled = 0;
 
-            var unsubscribeA = store.Subscribe(listenerA.Object);
+            StateChangeHandler<Todo[]> listenerA = state => timesListenerACalled++;
+            StateChangeHandler<Todo[]> listenerB = state => timesListenerBCalled++;
+
+            store.StateChanged += listenerA;
             store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(1));
-            listenerB.Verify(x => x(), Times.Exactly(0));
-
-            store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(2));
-            listenerB.Verify(x => x(), Times.Exactly(0));
-
-            var unsubscribeB = store.Subscribe(listenerB.Object);
-            listenerA.Verify(x => x(), Times.Exactly(2));
-            listenerB.Verify(x => x(), Times.Exactly(0));
+            Assert.Equal(1, timesListenerACalled);
+            Assert.Equal(0, timesListenerBCalled);
 
             store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(2, timesListenerACalled);
+            Assert.Equal(0, timesListenerBCalled);
 
-            unsubscribeA();
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(1));
-
-            store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(2));
-
-            unsubscribeB();
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(2));
+            store.StateChanged += listenerB;
+            Assert.Equal(2, timesListenerACalled);
+            Assert.Equal(0, timesListenerBCalled);
 
             store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(2));
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
 
-            store.Subscribe(listenerA.Object);
-            listenerA.Verify(x => x(), Times.Exactly(3));
-            listenerB.Verify(x => x(), Times.Exactly(2));
+            store.StateChanged -= listenerA;
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
 
             store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(4));
-            listenerB.Verify(x => x(), Times.Exactly(2));
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(2, timesListenerBCalled);
+
+            store.StateChanged -= listenerB;
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(2, timesListenerBCalled);
+
+            store.Dispatch(new UnknownAction());
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(2, timesListenerBCalled);
+
+            store.StateChanged += listenerA;
+            Assert.Equal(3, timesListenerACalled);
+            Assert.Equal(2, timesListenerBCalled);
+
+            store.Dispatch(new UnknownAction());
+            Assert.Equal(4, timesListenerACalled);
+            Assert.Equal(2, timesListenerBCalled);
         }
 
         [Fact]
         public void Only_Removes_Listener_Once_When_Unsubscribe_Is_Called() {
-            var store = Redux.CreateStore(TodosReducer, null);
-            var listenerA = new Mock<Action>();
-            var listenerB = new Mock<Action>();
+            var store = Redux.CreateStore(TodosReducer);
+            var timesListenerACalled = 0;
+            var timesListenerBCalled = 0;
 
-            var unsubscribeA = store.Subscribe(listenerA.Object);
-            store.Subscribe(listenerB.Object);
+            StateChangeHandler<Todo[]> listenerA = state => timesListenerACalled++;
+            StateChangeHandler<Todo[]> listenerB = state => timesListenerBCalled++;
 
-            unsubscribeA();
-            unsubscribeA();
+            store.StateChanged += listenerA;
+            store.StateChanged += listenerB;
+
+            store.StateChanged -= listenerA;
+            store.StateChanged -= listenerA;
 
             store.Dispatch(new UnknownAction());
-            listenerA.Verify(x => x(), Times.Exactly(0));
-            listenerB.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(0, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
         }
 
         [Fact]
         public void Supports_Removing_A_Subscription_Within_A_Subscription() {
-            var store = Redux.CreateStore(TodosReducer, null);
-            var listenerA = new Mock<Action>();
-            var listenerB = new Mock<Action>();
-            var listenerC = new Mock<Action>();
+            var store = Redux.CreateStore(TodosReducer);
+            var timesListenerACalled = 0;
+            var timesListenerBCalled = 0;
+            var timesListenerCCalled = 0;
 
-            store.Subscribe(listenerA.Object);
-            var unSubB = store.Subscribe(listenerB.Object);
-            store.Subscribe(() => {
-                unSubB();
-            });
-            store.Subscribe(listenerC.Object);
+            StateChangeHandler<Todo[]> listenerA = state => timesListenerACalled++;
+            StateChangeHandler<Todo[]> listenerB = state => timesListenerBCalled++;
+            StateChangeHandler<Todo[]> listenerC = state => timesListenerCCalled++;
+
+            store.StateChanged += listenerA;
+            store.StateChanged += listenerB;
+            store.StateChanged += state => store.StateChanged -= listenerB;
+            store.StateChanged += listenerC;
 
             store.Dispatch(new UnknownAction());
             store.Dispatch(new UnknownAction());
 
-            listenerA.Verify(x => x(), Times.Exactly(2));
-            listenerB.Verify(x => x(), Times.Exactly(1));
-            listenerC.Verify(x => x(), Times.Exactly(2));
+            Assert.Equal(2, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
+            Assert.Equal(2, timesListenerCCalled);
         }
 
         [Fact]
         public void Delays_Unsubscribe_Unitl_The_End_Of_Current_Dispatch() {
-            var store = Redux.CreateStore(TodosReducer, null);
+            var store = Redux.CreateStore(TodosReducer);
 
-            var unsubscribeHandles = new List<Action>();
+            IEnumerable<StateChangeHandler<Todo[]>> eventHandles = null;
+
+            var timesListenerACalled = 0;
+            var timesListenerBCalled = 0;
+            var timesListenerCCalled = 0;
+
             Action doUnsubscribeAll = () => {
-                foreach (var unsubscribeHandle in unsubscribeHandles) {
-                    unsubscribeHandle();
+                foreach (var eventHandle in eventHandles) {
+                    store.StateChanged -= eventHandle;
                 }
             };
 
-            var listener1 = new Mock<Action>();
-            var listener2 = new Mock<Action>();
-            var listener3 = new Mock<Action>();
-
-            unsubscribeHandles.Add(store.Subscribe(() => listener1.Object()));
-            unsubscribeHandles.Add(store.Subscribe(() => {
-                listener2.Object();
+            StateChangeHandler<Todo[]> listenerA = state => timesListenerACalled++;
+            StateChangeHandler<Todo[]> listenerB = state => {
+                timesListenerBCalled++;
                 doUnsubscribeAll();
-            }));
-            unsubscribeHandles.Add(store.Subscribe(() => listener3.Object()));
+            };
+            StateChangeHandler<Todo[]> listenerC = state => timesListenerCCalled++;
+
+            eventHandles = new List<StateChangeHandler<Todo[]>> {
+                listenerA, listenerB, listenerC
+            };
+
+            store.StateChanged += listenerA;
+            store.StateChanged += listenerB;
+            store.StateChanged += listenerC;
 
             store.Dispatch(new UnknownAction());
-            listener1.Verify(x => x(), Times.Exactly(1));
-            listener2.Verify(x => x(), Times.Exactly(1));
-            listener3.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(1, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
+            Assert.Equal(1, timesListenerCCalled);
 
             store.Dispatch(new UnknownAction());
-            listener1.Verify(x => x(), Times.Exactly(1));
-            listener2.Verify(x => x(), Times.Exactly(1));
-            listener3.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(1, timesListenerACalled);
+            Assert.Equal(1, timesListenerBCalled);
+            Assert.Equal(1, timesListenerCCalled);
         }
 
         [Fact]
         public void Uses_The_Last_Snapshot_Of_Subscribers_During_Nested_Dispatch() {
-            var store = Redux.CreateStore(TodosReducer, null);
+            var store = Redux.CreateStore(TodosReducer);
+            var timesListener1Called = 0;
+            var timesListener2Called = 0;
+            var timesListener3Called = 0;
+            var timesListener4Called = 0;
 
-            var listener1 = new Mock<Action>();
-            var listener2 = new Mock<Action>();
-            var listener3 = new Mock<Action>();
-            var listener4 = new Mock<Action>();
+            StateChangeHandler<Todo[]> listener1 = state => timesListener1Called++;
+            StateChangeHandler<Todo[]> listener2 = state => timesListener2Called++;
+            StateChangeHandler<Todo[]> listener3 = state => timesListener3Called++;
+            StateChangeHandler<Todo[]> listener4 = state => timesListener4Called++;
 
-            Action unsubscribe4 = null;
-            Action unsubscribe1 = null;
-            unsubscribe1 = store.Subscribe(() => {
-                listener1.Object();
+            StateChangeHandler<Todo[]> unsubMe = null;
+            unsubMe = state => {
+                listener1(state);
+                Assert.Equal(1, timesListener1Called);
+                Assert.Equal(0, timesListener2Called);
+                Assert.Equal(0, timesListener3Called);
+                Assert.Equal(0, timesListener4Called);
 
-                listener1.Verify(x => x(), Times.Exactly(1));
-                listener2.Verify(x => x(), Times.Exactly(0));
-                listener3.Verify(x => x(), Times.Exactly(0));
-                listener4.Verify(x => x(), Times.Exactly(0));
-
-                unsubscribe1?.Invoke();
-                unsubscribe4 = store.Subscribe(listener4.Object);
+                store.StateChanged -= unsubMe;
+                store.StateChanged += listener4;
                 store.Dispatch(new UnknownAction());
 
-                listener1.Verify(x => x(), Times.Exactly(1));
-                listener2.Verify(x => x(), Times.Exactly(1));
-                listener3.Verify(x => x(), Times.Exactly(1));
-                listener4.Verify(x => x(), Times.Exactly(1));
-            });
-            store.Subscribe(listener2.Object);
-            store.Subscribe(listener3.Object);
+                Assert.Equal(1, timesListener1Called);
+                Assert.Equal(1, timesListener2Called);
+                Assert.Equal(1, timesListener3Called);
+                Assert.Equal(1, timesListener4Called);
+            };
+
+            store.StateChanged += unsubMe;
+            store.StateChanged += listener2;
+            store.StateChanged += listener3;
 
             store.Dispatch(new UnknownAction());
-            listener1.Verify(x => x(), Times.Exactly(1));
-            listener2.Verify(x => x(), Times.Exactly(2));
-            listener3.Verify(x => x(), Times.Exactly(2));
-            listener4.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(1, timesListener1Called);
+            Assert.Equal(2, timesListener2Called);
+            Assert.Equal(2, timesListener3Called);
+            Assert.Equal(1, timesListener4Called);
 
-            unsubscribe4?.Invoke();
+            store.StateChanged -= listener4;
             store.Dispatch(new UnknownAction());
-            listener1.Verify(x => x(), Times.Exactly(1));
-            listener2.Verify(x => x(), Times.Exactly(3));
-            listener3.Verify(x => x(), Times.Exactly(3));
-            listener4.Verify(x => x(), Times.Exactly(1));
+            Assert.Equal(1, timesListener1Called);
+            Assert.Equal(3, timesListener2Called);
+            Assert.Equal(3, timesListener3Called);
+            Assert.Equal(1, timesListener4Called);
         }
 
         [Fact]
         public void Provides_Up_To_Date_State_When_A_Subscriber_Is_Notified() {
-            var store = Redux.CreateStore(TodosReducer, null);
-            store.Subscribe(() => {
+            var store = Redux.CreateStore(TodosReducer);
+            store.StateChanged += state => {
                 Assert.Equal(new[] {
                     new Todo {
                         Id = 1,
                         Message = "Hello"
                     }
-                }, store.GetState());
-            });
+                }, state);
+            };
             store.Dispatch(new AddTodoAction("Hello"));
         }
 
@@ -371,14 +391,14 @@ namespace NRedux.Test {
         [InlineData('0')]
         [InlineData("0")]
         public void Does_Not_Allow_Value_TypeActions(Object action) {
-            var store = Redux.CreateStore(TodosReducer, null);
+            var store = Redux.CreateStore(TodosReducer);
 
             Assert.Throws<Exception>(() => store.Dispatch(action));
         }
 
         [Fact]
         public void Does_Not_Allow_Dispatch_From_Within_Reducer() {
-            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+            var store = Redux.CreateStore(BoundActionInMiddleReducer);
 
             Assert.Throws<Exception>(() => {
                 store.Dispatch(new ActionWithBoundFn(() => {
@@ -389,39 +409,40 @@ namespace NRedux.Test {
 
         [Fact]
         public void Does_Not_Allow_GetState_From_Within_Reducer() {
-            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+            var store = Redux.CreateStore(BoundActionInMiddleReducer);
 
             Assert.Throws<Exception>(() => {
                 store.Dispatch(new ActionWithBoundFn(() => {
-                    store.GetState();
+                    var state = store.State;
                 }));
             });
         }
 
         [Fact]
         public void Does_Not_Allow_Subscribe_From_Within_Reducer() {
-            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
+            var store = Redux.CreateStore(BoundActionInMiddleReducer);
 
             Assert.Throws<Exception>(() => {
                 store.Dispatch(new ActionWithBoundFn(() => {
-                    store.Subscribe(() => { });
+                    store.StateChanged += state => { };
                 }));
             });
         }
 
         [Fact]
         public void Does_Not_Allow_Unsubscribe_From_Within_Reducer() {
-            var store = Redux.CreateStore(BoundActionInMiddleReducer, 0);
-            var unsubscribe = store.Subscribe(() => { });
+            var store = Redux.CreateStore(BoundActionInMiddleReducer);
+            StateChangeHandler<Int32> listener1 = state => { };
 
+            store.StateChanged += listener1;
             Assert.Throws<Exception>(() => {
-                store.Dispatch(new ActionWithBoundFn(unsubscribe));
+                store.Dispatch(new ActionWithBoundFn(() => store.StateChanged -= listener1));
             });
         }
 
         [Fact]
         public void Recovers_From_Error_Within_Reducer() {
-            var store = Redux.CreateStore(ThrowErrorReducer, 0);
+            var store = Redux.CreateStore(ThrowErrorReducer);
 
             Assert.Throws<Exception>(() => store.Dispatch(new ErrorAction()));
             store.Dispatch(new UnknownAction());
@@ -436,7 +457,7 @@ namespace NRedux.Test {
                     .Range(0, 1000)
                     .Select(x => Task.Factory.StartNew(() => store.Dispatch(new UnknownAction()))));
 
-            Assert.Equal(1001, store.GetState());
+            Assert.Equal(1001, store.State);
         }
     }
 }

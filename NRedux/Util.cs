@@ -23,7 +23,7 @@ namespace NRedux {
                    || action is String;
         }
 
-        internal static Func<Dispatcher, Dispatcher> Compose(params Func<Dispatcher, Dispatcher>[] funcs) {
+        internal static Func<T, T> Compose<T>(params Func<T, T>[] funcs) {
             if (funcs.Length == 0) {
                 return arg => arg;
             }

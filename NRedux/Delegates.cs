@@ -8,6 +8,8 @@ namespace NRedux {
     /// <returns></returns>
     public delegate Object Dispatcher(Object action);
 
+    public delegate void StateChangeHandler<in TState>(TState state);
+
     /// <summary>
     /// Represents a method that is used to update the state tree.
     /// </summary>

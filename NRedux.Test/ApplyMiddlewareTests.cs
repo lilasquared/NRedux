@@ -15,7 +15,7 @@ namespace NRedux.Test {
             store.Dispatch(new Helpers.AddTodoAction("Use Redux"));
             store.Dispatch(new Helpers.AddTodoAction("Flux FTW!"));
 
-            var state = store.GetState();
+            var state = store.State;
 
             Assert.Equal(1, timesCalled);
             Assert.Equal(2, state.Length);
@@ -47,10 +47,10 @@ namespace NRedux.Test {
             };
 
             store.Dispatch(Helpers.AddTodoIfEmpty("Hello"));
-            Assert.Equal(expectedState, store.GetState());
+            Assert.Equal(expectedState, store.State);
 
             store.Dispatch(Helpers.AddTodoIfEmpty("Hello"));
-            Assert.Equal(expectedState, store.GetState());
+            Assert.Equal(expectedState, store.State);
 
             expectedState = new[] {
                 new Helpers.Todo {
@@ -64,7 +64,7 @@ namespace NRedux.Test {
             };
 
             store.Dispatch(new Helpers.AddTodoAction("World"));
-            Assert.Equal(expectedState, store.GetState());
+            Assert.Equal(expectedState, store.State);
 
             expectedState = new[] {
                 new Helpers.Todo {
@@ -83,7 +83,7 @@ namespace NRedux.Test {
 
             var promise = store.Dispatch(Helpers.AddTodoAsync("Maybe")) as Task;
             await promise.ContinueWith(task => {
-                Assert.Equal(expectedState, store.GetState());
+                Assert.Equal(expectedState, store.State);
             });
         }
 

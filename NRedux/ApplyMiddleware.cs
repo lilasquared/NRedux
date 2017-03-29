@@ -23,14 +23,14 @@ namespace NRedux {
                 var dispatch = store.Dispatch;
 
                 var middlewareApi = new MiddlewareApi<TState> {
-                    GetState = store.GetState,
+                    State = store.State,
                     Dispatch = action => dispatch(action)
                 };
 
                 var chain = middlewares.Select(middleware => middleware(middlewareApi)).ToArray();
                 dispatch = Util.Compose(chain)(store.Dispatch);
 
-                return new Store<TState>(dispatch, store.Subscribe, store.GetState, store.ReplaceReducer);
+                return new Store<TState>(dispatch, store);
             };
         }
     }
